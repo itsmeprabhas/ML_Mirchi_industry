@@ -1,0 +1,74 @@
+# ============================================================
+# ML Mirchi — Git Ignore
+# ============================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.whl
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ML — Large files (NEVER commit these)
+data/raw/
+data/processed/
+checkpoints/
+logs/
+exports/
+results/
+*.pth
+*.pt
+*.onnx
+*.tflite
+*.h5
+*.pkl
+*.pickle
+*.npy
+*.npz
+
+# TensorBoard
+runs/
+
+# Environment
+.env
+.env.local
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+mlruns/
+wandb/
+
+# Temporary
+tmp/
+temp/
+*.tmp
+
+# Model artifacts larger than 50MB
+*.bin
+*.safetensors
