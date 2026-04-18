@@ -16,10 +16,15 @@ Real-time computer vision grading in <15ms per image using EfficientNet-B0 trans
 **GRADE**
 
 ** DESCRIPTION**
+
   🟢 Grade A	Premium — deep red, uniform, no defects
+  
   🟡 Grade B	Standard — minor variation
+  
   🟠 Grade C	Sub-standard — discoloration, spots
+  
   🔴 Reject	Rot, mold, pest damage
+  
 
 ** Quick Start**
 ```
