@@ -1,0 +1,21 @@
+import onnxruntime as ort
+import numpy as np
+from PIL import Image
+
+# Load
+session = ort.InferenceSession("exports/mirchi_grader.onnx")
+classes = ["Grade_A", "Grade_B", "Grade_C", "Reject"]
+
+# Preprocess
+img = Image.open("chilli.jpg").convert("RGB").resize((224, 224))
+arr = np.array(img, dtype=np.float32) / 255.0
+arr = (arr - [0.485, 0.456, 0.406]) / [0.229, 0.224, 0.225]
+arr = arr.transpose(2, 0, 1)[np.newaxis]  # [1, 3, 224, 224]
+
+# Predict
+logits = session.run(None, {"image": arr})[0]
+prob = np.softmax(logits[0])
+grade = classes[np.argmax(prob)]
+confidence = np.max(prob)
+
+print(f"Grade: {grade} ({confidence*100:.1f}%)")
