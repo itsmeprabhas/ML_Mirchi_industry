@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Mirchi — Automated Chilli Quality Grading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="static/css/style.css">
+    
+</head>
+
+<body>
+
+    <!-- Background layers -->
+    <div class="bg-mesh"></div>
+    <div class="bg-grid"></div>
+    <div id="particles"></div>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Navigation -->
+    <nav
+        style="position:sticky;top:0;z-index:100;background:rgba(15,11,8,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);">
+        <div
+            style="max-width:1280px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <div
+                    style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-warm));display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-pepper-hot" style="color:white;font-size:18px;"></i>
+                </div>
+                <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:20px;">ML Mirchi</span>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;" id="navLinks">
+                <a href="#hero" class="nav-link active" data-section="hero">Home</a>
+                <a href="#grading" class="nav-link" data-section="grading">Grade</a>
+                <a href="#camera" class="nav-link" data-section="camera">Live Camera</a>
+                <a href="#dashboard" class="nav-link" data-section="dashboard">Dashboard</a>
+                <a href="#history" class="nav-link" data-section="history">History</a>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:8px;height:8px;border-radius:50%;background:var(--grade-premium);box-shadow:0 0 8px rgba(34,197,94,0.5);"
+                    class="pulse-ring"></div>
+                <span style="font-size:13px;color:var(--fg-muted);">System Online</span>
+            </div>
+        </div>
+    </nav>
+
+    <main style="position:relative;z-index:1;">
+
+        <!-- Hero Section -->
+        <section id="hero" style="max-width:1280px;margin:0 auto;padding:80px 24px 60px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;" class="hero-grid">
+                <div>
+                    <div
+                        style="display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:20px;background:rgba(230,57,38,0.1);border:1px solid rgba(230,57,38,0.2);margin-bottom:20px;">
+                        <div style="width:6px;height:6px;border-radius:50%;background:var(--accent);"></div>
+                        <span style="font-size:13px;color:var(--accent);font-weight:600;">AI-Powered Quality
+                            Control</span>
+                    </div>
+                    <h1 class="hero-title" style="font-size:52px;font-weight:700;line-height:1.1;margin-bottom:20px;">
+                        Automated Mirchi<br>
+                        <span
+                            style="background:linear-gradient(135deg,var(--accent),var(--accent-warm),var(--accent-gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Quality
+                            Grading</span>
+                    </h1>
+                    <p style="font-size:17px;color:var(--fg-muted);line-height:1.7;margin-bottom:32px;max-width:480px;">
+                        Cutting post-harvest losses with real-time computer vision. Replace slow, subjective manual
+                        sorting with millisecond-precision AI grading that reduces waste by 15% and boosts customer
+                        satisfaction by 10%.
+                    </p>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <button class="btn-primary" onclick="scrollToSection('grading')">
+                            <i class="fas fa-camera" style="margin-right:8px;"></i>Start Grading
+                        </button>
+                        <button class="btn-secondary" onclick="scrollToSection('dashboard')">
+                            <i class="fas fa-chart-bar" style="margin-right:8px;"></i>View Dashboard
+                        </button>
+                    </div>
+                    <div style="display:flex;gap:40px;margin-top:40px;">
+                        <div>
+                            <div style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:var(--fg);"
+                                id="statAccuracy">0%</div>
+                            <div style="font-size:13px;color:var(--fg-muted);">Model Accuracy</div>
+                        </div>
+                        <div>
+                            <div style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:var(--fg);"
+                                id="statLatency">0ms</div>
+                            <div style="font-size:13px;color:var(--fg-muted);">Avg Latency</div>
+                        </div>
+                        <div>
+                            <div style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:var(--fg);"
+                                id="statGraded">0</div>
+                            <div style="font-size:13px;color:var(--fg-muted);">Chillies Graded</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="position:relative;">
+                    <div
+                        style="position:relative;border-radius:20px;overflow:hidden;border:1px solid var(--border);background:var(--card);padding:20px;">
+                        <canvas id="heroCanvas" width="500" height="400"
+                            style="width:100%;border-radius:12px;"></canvas>
+                        <div
+                            style="position:absolute;bottom:28px;left:28px;right:28px;display:flex;justify-content:space-between;align-items:end;">
+                            <div>
+                                <div
+                                    style="font-size:11px;color:var(--fg-muted);text-transform:uppercase;letter-spacing:1px;">
+                                    Live Detection</div>
+                                <div style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;">
+                                    Sample Batch #47</div>
+                            </div>
+                            <div class="grade-badge grade-premium"><i class="fas fa-check-circle"></i> Grade A</div>
+                        </div>
+                    </div>
+                    <div
+                        style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,var(--accent-glow),transparent);animation:pulseRing 2s ease-out infinite;">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Grading Section -->
+        <section id="grading" style="max-width:1280px;margin:0 auto;padding:40px 24px 60px;" class="reveal-section">
+            <div style="text-align:center;margin-bottom:40px;">
+                <h2 style="font-size:36px;font-weight:700;margin-bottom:10px;">Image Grading Lab</h2>
+                <p style="color:var(--fg-muted);font-size:16px;">Upload chilli images or use sample data for instant AI
+                    grading</p>
+            </div>
+
+            <!-- Tabs -->
+            <div style="display:flex;justify-content:center;gap:8px;margin-bottom:32px;">
+                <button class="tab-btn active" onclick="switchGradingTab('upload',this)">Single Upload</button>
+                <button class="tab-btn" onclick="switchGradingTab('batch',this)">Batch Process</button>
+                <button class="tab-btn" onclick="switchGradingTab('samples',this)">Sample Data</button>
+            </div>
+
+            <!-- Upload Tab -->
+            <div id="tab-upload" style="display:grid;grid-template-columns:1fr 1fr;gap:24px;" class="grading-grid">
+                <div>
+                    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                        <input type="file" id="fileInput" accept="image/*" style="display:none;"
+                            onchange="handleFileUpload(event)">
+                        <i class="fas fa-cloud-upload-alt"
+                            style="font-size:48px;color:var(--accent);margin-bottom:16px;display:block;"></i>
+                        <p style="font-size:16px;font-weight:600;margin-bottom:6px;">Drop chilli image here</p>
+                        <p style="font-size:13px;color:var(--fg-muted);">or click to browse — PNG, JPG up to 10MB</p>
+                    </div>
+                    <div id="previewContainer"
+                        style="display:none;margin-top:16px;position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--border);">
+                        <img id="previewImage" style="width:100%;display:block;">
+                        <div class="scan-line" id="scanLine" style="display:none;"></div>
+                    </div>
+                </div>
+                <div class="glass-card" style="padding:28px;" id="resultPanel">
+                    <div style="text-align:center;padding:60px 20px;" id="resultPlaceholder">
+                        <i class="fas fa-microscope"
+                            style="font-size:48px;color:var(--border);margin-bottom:16px;display:block;"></i>
+                        <p style="color:var(--fg-muted);font-size:15px;">Upload an image to see grading results</p>
+                    </div>
+                    <div id="resultContent" style="display:none;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                            <h3 style="font-size:20px;font-weight:700;">Grading Result</h3>
+                            <div id="resultGrade" class="grade-badge"></div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+                            <div
+                                style="text-align:center;padding:16px;border-radius:12px;background:rgba(33,26,20,0.8);border:1px solid var(--border);">
+                                <div
+                                    style="font-size:12px;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">
+                                    Confidence</div>
+                                <div style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;"
+                                    id="resultConfidence">—</div>
+                            </div>
+                            <div
+                                style="text-align:center;padding:16px;border-radius:12px;background:rgba(33,26,20,0.8);border:1px solid var(--border);">
+                                <div
+                                    style="font-size:12px;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">
+                                    Latency</div>
+                                <div style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;"
+                                    id="resultLatency">—</div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom:20px;">
+                            <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--fg-muted);">Grade
+                                Probabilities</div>
+                            <div id="probabilityBars"></div>
+                        </div>
+                        <div
+                            style="padding:16px;border-radius:12px;background:rgba(33,26,20,0.8);border:1px solid var(--border);">
+                            <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--fg-muted);">
+                                Detected Attributes</div>
+                            <div id="detectedAttributes" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+                        </div>
+                        <button class="btn-primary" style="width:100%;margin-top:20px;" onclick="resetGrading()">
+                            <i class="fas fa-redo" style="margin-right:8px;"></i>Grade Another
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Batch Tab -->
+            <div id="tab-batch" style="display:none;">
+                <div class="glass-card" style="padding:28px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                        <h3 style="font-size:18px;font-weight:700;">Batch Processing</h3>
+                        <span style="font-size:13px;color:var(--fg-muted);" id="batchCount">0 images selected</span>
+                    </div>
+                    <div class="upload-zone" id="batchUploadZone" style="padding:30px;"
+                        onclick="document.getElementById('batchInput').click()">
+                        <input type="file" id="batchInput" accept="image/*" multiple style="display:none;"
+                            onchange="handleBatchUpload(event)">
+                        <i class="fas fa-images"
+                            style="font-size:36px;color:var(--accent);margin-bottom:12px;display:block;"></i>
+                        <p style="font-size:15px;font-weight:600;">Select multiple chilli images</p>
+                        <p style="font-size:13px;color:var(--fg-muted);">All images will be processed sequentially</p>
+                    </div>
+                    <div id="batchProgress" style="display:none;margin-top:20px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                            <span style="font-size:13px;font-weight:600;">Processing...</span>
+                            <span style="font-size:13px;color:var(--fg-muted);" id="batchProgressText">0/0</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="batchProgressBar" style="width:0%"></div>
+                        </div>
+                    </div>
+                    <div id="batchResults"
+                        style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:20px;">
+                    </div>
+                    <button class="btn-primary" id="batchStartBtn" style="display:none;margin-top:20px;"
+                        onclick="startBatchProcessing()">
+                        <i class="fas fa-play" style="margin-right:8px;"></i>Start Batch Grading
+                    </button>
+                </div>
+            </div>
+
+            <!-- Samples Tab -->
+            <div id="tab-samples" style="display:none;">
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;"
+                    id="samplesGrid"></div>
+            </div>
+        </section>
+
+        <!-- Live Camera Section -->
+        <section id="camera" style="max-width:1280px;margin:0 auto;padding:40px 24px 60px;" class="reveal-section">
+            <div style="text-align:center;margin-bottom:40px;">
+                <h2 style="font-size:36px;font-weight:700;margin-bottom:10px;">Real-Time Camera Grading</h2>
+                <p style="color:var(--fg-muted);font-size:16px;">Simulated conveyor belt inspection with live inference
+                </p>
+            </div>
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;" class="camera-grid">
+                <div>
+                    <div class="camera-feed" id="cameraFeed">
+                        <canvas id="cameraCanvas" width="800" height="500"></canvas>
+                        <div id="cameraOverlay" style="position:absolute;top:12px;left:12px;display:flex;gap:8px;">
+                            <div
+                                style="padding:4px 10px;border-radius:6px;background:rgba(0,0,0,0.6);font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px;">
+                                <div style="width:6px;height:6px;border-radius:50;background:var(--grade-reject);"
+                                    id="cameraStatusDot"></div>
+                                <span id="cameraStatusText">Offline</span>
+                            </div>
+                            <div style="padding:4px 10px;border-radius:6px;background:rgba(0,0,0,0.6);font-size:11px;font-weight:600;"
+                                id="cameraFps">0 FPS</div>
+                        </div>
+                        <div id="cameraGradeOverlay"
+                            style="position:absolute;bottom:12px;left:12px;right:12px;display:none;">
+                            <div
+                                style="padding:12px 16px;border-radius:10px;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);display:flex;justify-content:space-between;align-items:center;">
+                                <div>
+                                    <div
+                                        style="font-size:11px;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.5px;">
+                                        Detected Grade</div>
+                                    <div style="font-size:20px;font-weight:700;font-family:'Space Grotesk',sans-serif;"
+                                        id="cameraGradeText">—</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div
+                                        style="font-size:11px;color:var(--fg-muted);text-transform:uppercase;letter-spacing:0.5px;">
+                                        Confidence</div>
+                                    <div style="font-size:20px;font-weight:700;font-family:'Space Grotesk',sans-serif;"
+                                        id="cameraConfText">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:12px;margin-top:16px;">
+                        <button class="btn-primary" id="cameraStartBtn" onclick="toggleCamera()" style="flex:1;">
+                            <i class="fas fa-video" style="margin-right:8px;"></i>Start Camera
+                        </button>
+                        <button class="btn-secondary" onclick="captureAndGrade()" id="captureBtn" disabled
+                            style="flex:1;">
+                            <i class="fas fa-camera" style="margin-right:8px;"></i>Capture & Grade
+                        </button>
+                    </div>
+                    <div style="margin-top:16px;">
+                        <label
+                            style="font-size:13px;font-weight:600;color:var(--fg-muted);display:block;margin-bottom:8px;">Confidence
+                            Threshold: <span id="thresholdValue">0.70</span></label>
+                        <input type="range" min="0.5" max="0.99" step="0.01" value="0.70" id="confidenceThreshold"
+                            style="width:100%;accent-color:var(--accent);"
+                            oninput="document.getElementById('thresholdValue').textContent=parseFloat(this.value).toFixed(2)">
+                        <div
+                            style="display:flex;justify-content:space-between;font-size:11px;color:var(--fg-muted);margin-top:4px;">
+                            <span>More Flags (0.50)</span>
+                            <span>Fewer Flags (0.99)</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="glass-card" style="padding:20px;margin-bottom:16px;">
+                        <h4 style="font-size:15px;font-weight:700;margin-bottom:16px;">Camera Metrics</h4>
+                        <div style="display:flex;flex-direction:column;gap:12px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:13px;color:var(--fg-muted);">Total Captured</span>
+                                <span style="font-weight:700;font-family:'Space Grotesk',sans-serif;"
+                                    id="camTotalCaptured">0</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:13px;color:var(--fg-muted);">Auto-Graded</span>
+                                <span
+                                    style="font-weight:700;font-family:'Space Grotesk',sans-serif;color:var(--grade-premium);"
+                                    id="camAutoGraded">0</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:13px;color:var(--fg-muted);">Flagged for Review</span>
+                                <span
+                                    style="font-weight:700;font-family:'Space Grotesk',sans-serif;color:var(--accent-gold);"
+                                    id="camFlagged">0</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <span style="font-size:13px;color:var(--fg-muted);">Avg Latency</span>
+                                <span style="font-weight:700;font-family:'Space Grotesk',sans-serif;"
+                                    id="camAvgLatency">—</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card" style="padding:20px;">
+                        <h4 style="font-size:15px;font-weight:700;margin-bottom:16px;">Recent Captures</h4>
+                        <div id="cameraHistory"
+                            style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;">
+                            <div style="text-align:center;padding:30px 0;color:var(--fg-muted);font-size:13px;">No
+                                captures yet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" style="max-width:1280px;margin:0 auto;padding:40px 24px 60px;" class="reveal-section">
+            <div style="text-align:center;margin-bottom:40px;">
+                <h2 style="font-size:36px;font-weight:700;margin-bottom:10px;">Analytics Dashboard</h2>
+                <p style="color:var(--fg-muted);font-size:16px;">Real-time monitoring of grading performance and
+                    business impact</p>
+            </div>
+
+            <!-- KPI Cards -->
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;" class="kpi-grid">
+                <div class="glass-card" style="padding:24px;">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+                        <span style="font-size:13px;color:var(--fg-muted);font-weight:500;">Total Graded</span>
+                        <div
+                            style="width:36px;height:36px;border-radius:10px;background:rgba(230,57,38,0.1);display:flex;align-items:center;justify-content:center;">
+                            <i class="fas fa-box" style="color:var(--accent);font-size:14px;"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="dashTotal">0</div>
+                    <div style="font-size:12px;color:var(--grade-premium);margin-top:4px;"><i
+                            class="fas fa-arrow-up"></i> Live</div>
+                </div>
+                <div class="glass-card" style="padding:24px;">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+                        <span style="font-size:13px;color:var(--fg-muted);font-weight:500;">Premium Rate</span>
+                        <div
+                            style="width:36px;height:36px;border-radius:10px;background:rgba(34,197,94,0.1);display:flex;align-items:center;justify-content:center;">
+                            <i class="fas fa-award" style="color:var(--grade-premium);font-size:14px;"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="dashPremium">0%</div>
+                    <div style="font-size:12px;color:var(--fg-muted);margin-top:4px;">Grade A chillies</div>
+                </div>
+                <div class="glass-card" style="padding:24px;">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+                        <span style="font-size:13px;color:var(--fg-muted);font-weight:500;">Reject Rate</span>
+                        <div
+                            style="width:36px;height:36px;border-radius:10px;background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center;">
+                            <i class="fas fa-ban" style="color:var(--grade-reject);font-size:14px;"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="dashReject">0%</div>
+                    <div style="font-size:12px;color:var(--fg-muted);margin-top:4px;">Waste reduction target: 15%</div>
+                </div>
+                <div class="glass-card" style="padding:24px;">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+                        <span style="font-size:13px;color:var(--fg-muted);font-weight:500;">Avg Confidence</span>
+                        <div
+                            style="width:36px;height:36px;border-radius:10px;background:rgba(244,166,35,0.1);display:flex;align-items:center;justify-content:center;">
+                            <i class="fas fa-brain" style="color:var(--accent-gold);font-size:14px;"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="dashConfidence">—</div>
+                    <div style="font-size:12px;color:var(--fg-muted);margin-top:4px;">Model certainty</div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-bottom:24px;" class="chart-grid">
+                <div class="glass-card" style="padding:24px;">
+                    <h4 style="font-size:16px;font-weight:700;margin-bottom:20px;">Grading Volume Over Time</h4>
+                    <canvas id="volumeChart" height="250"></canvas>
+                </div>
+                <div class="glass-card" style="padding:24px;">
+                    <h4 style="font-size:16px;font-weight:700;margin-bottom:20px;">Grade Distribution</h4>
+                    <canvas id="distributionChart" height="250"></canvas>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;" class="chart-grid-2">
+                <div class="glass-card" style="padding:24px;">
+                    <h4 style="font-size:16px;font-weight:700;margin-bottom:20px;">Latency Distribution</h4>
+                    <canvas id="latencyChart" height="200"></canvas>
+                </div>
+                <div class="glass-card" style="padding:24px;">
+                    <h4 style="font-size:16px;font-weight:700;margin-bottom:20px;">Business Impact Metrics</h4>
+                    <div style="display:flex;flex-direction:column;gap:16px;padding-top:8px;">
+                        <div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                <span style="font-size:13px;color:var(--fg-muted);">Post-Harvest Loss Reduction</span>
+                                <span style="font-size:13px;font-weight:700;" id="impactLoss">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="impactLossBar"
+                                    style="width:0%;background:linear-gradient(90deg,var(--grade-premium),#16a34a);">
+                                </div>
+                            </div>
+                            <div style="font-size:11px;color:var(--fg-muted);margin-top:4px;">Target: 15% within 6
+                                months</div>
+                        </div>
+                        <div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                <span style="font-size:13px;color:var(--fg-muted);">Customer Satisfaction
+                                    Improvement</span>
+                                <span style="font-size:13px;font-weight:700;" id="impactSatisfaction">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="impactSatisfactionBar"
+                                    style="width:0%;background:linear-gradient(90deg,var(--accent-gold),var(--accent-warm));">
+                                </div>
+                            </div>
+                            <div style="font-size:11px;color:var(--fg-muted);margin-top:4px;">Target: 10% increase</div>
+                        </div>
+                        <div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                <span style="font-size:13px;color:var(--fg-muted);">COGS Reduction (Material
+                                    Waste)</span>
+                                <span style="font-size:13px;font-weight:700;" id="impactCOGS">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="impactCOGSBar"
+                                    style="width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-warm));">
+                                </div>
+                            </div>
+                            <div style="font-size:11px;color:var(--fg-muted);margin-top:4px;">Target: 8% cost saving
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                <span style="font-size:13px;color:var(--fg-muted);">Throughput Gain vs Manual</span>
+                                <span style="font-size:13px;font-weight:700;" id="impactThroughput">0x</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="impactThroughputBar"
+                                    style="width:0%;background:linear-gradient(90deg,#8b5cf6,#a78bfa);"></div>
+                            </div>
+                            <div style="font-size:11px;color:var(--fg-muted);margin-top:4px;">Current: Manual ~200/hr,
+                                Target: 2000/hr</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- History Section -->
+        <section id="history" style="max-width:1280px;margin:0 auto;padding:40px 24px 80px;" class="reveal-section">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;">
+                <div>
+                    <h2 style="font-size:36px;font-weight:700;margin-bottom:10px;">Grading History</h2>
+                    <p style="color:var(--fg-muted);font-size:16px;">Complete log of all graded items</p>
+                </div>
+                <button class="btn-secondary" onclick="clearHistory()">
+                    <i class="fas fa-trash" style="margin-right:8px;"></i>Clear History
+                </button>
+            </div>
+            <div class="glass-card" style="padding:24px;">
+                <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;" id="historyFilters">
+                    <button class="tab-btn active" onclick="filterHistory('all',this)">All</button>
+                    <button class="tab-btn" onclick="filterHistory('Grade A',this)">Grade A</button>
+                    <button class="tab-btn" onclick="filterHistory('Grade B',this)">Grade B</button>
+                    <button class="tab-btn" onclick="filterHistory('Grade C',this)">Grade C</button>
+                    <button class="tab-btn" onclick="filterHistory('Reject',this)">Reject</button>
+                    <button class="tab-btn" onclick="filterHistory('flagged',this)">Flagged</button>
+                </div>
+                <div id="historyList"
+                    style="display:flex;flex-direction:column;gap:8px;max-height:500px;overflow-y:auto;">
+                    <div style="text-align:center;padding:40px 0;color:var(--fg-muted);font-size:15px;">
+                        <i class="fas fa-inbox"
+                            style="font-size:36px;display:block;margin-bottom:12px;color:var(--border);"></i>
+                        No grading history yet. Start grading to see results here.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer style="position:relative;z-index:1;border-top:1px solid var(--border);padding:30px 24px;">
+        <div
+            style="max-width:1280px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <div
+                    style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-warm));display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-pepper-hot" style="color:white;font-size:12px;"></i>
+                </div>
+                <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;">ML Mirchi</span>
+                <span style="color:var(--fg-muted);font-size:13px;">— Automated Chilli Quality Grading</span>
+            </div>
+            <div style="font-size:13px;color:var(--fg-muted);">CRISP-DM ML System Design | Real-Time Computer Vision
+            </div>
+        </div>
+    </footer>
+
+    <!-- Flag Review Modal -->
+    <div class="modal-overlay" id="flagModal">
+        <div class="modal-content">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h3 style="font-size:20px;font-weight:700;">Low Confidence — Human Review</h3>
+                <button onclick="closeFlagModal()"
+                    style="background:none;border:none;color:var(--fg-muted);cursor:pointer;font-size:20px;"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div style="display:flex;gap:16px;margin-bottom:20px;">
+                <canvas id="flagModalCanvas" width="200" height="150"
+                    style="border-radius:12px;border:1px solid var(--border);"></canvas>
+                <div style="flex:1;">
+                    <div style="font-size:13px;color:var(--fg-muted);margin-bottom:4px;">Model Prediction</div>
+                    <div id="flagModalGrade"
+                        style="font-size:24px;font-weight:700;font-family:'Space Grotesk',sans-serif;margin-bottom:8px;">
+                    </div>
+                    <div style="font-size:13px;color:var(--fg-muted);margin-bottom:4px;">Confidence</div>
+                    <div id="flagModalConf"
+                        style="font-size:18px;font-weight:600;color:var(--accent-gold);margin-bottom:12px;"></div>
+                    <div
+                        style="font-size:12px;color:var(--fg-muted);background:rgba(244,166,35,0.1);padding:8px 12px;border-radius:8px;border:1px solid rgba(244,166,35,0.2);">
+                        <i class="fas fa-exclamation-triangle" style="color:var(--accent-gold);margin-right:4px;"></i>
+                        Below threshold — requires human verification
+                    </div>
+                </div>
+            </div>
+            <p style="font-size:14px;color:var(--fg-muted);margin-bottom:20px;">Override the model prediction or confirm
+                it:</p>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;">
+                <button class="btn-secondary" style="padding:10px;font-size:13px;"
+                    onclick="overrideGrade('Grade A')">Grade A</button>
+                <button class="btn-secondary" style="padding:10px;font-size:13px;"
+                    onclick="overrideGrade('Grade B')">Grade B</button>
+                <button class="btn-secondary" style="padding:10px;font-size:13px;"
+                    onclick="overrideGrade('Grade C')">Grade C</button>
+                <button class="btn-secondary" style="padding:10px;font-size:13px;"
+                    onclick="overrideGrade('Reject')">Reject</button>
+            </div>
+            <button class="btn-primary" style="width:100%;" onclick="confirmFlaggedGrade()">
+                <i class="fas fa-check" style="margin-right:8px;"></i>Confirm Model Prediction
+            </button>
+        </div>
+    </div>
+
+    <script src="static/js/app.js"></script>
+</body>
+
+</html>
